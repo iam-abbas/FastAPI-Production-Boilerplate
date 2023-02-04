@@ -1,0 +1,43 @@
+version: "3.4"
+
+services:
+  postgresql:
+    image: postgres:14.2-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: fastapi-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  postgresql-test:
+    image: postgres:14.2-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: fastapi-db-test
+    ports:
+      - "5431:5432"
+    volumes:
+      - postgresql-test:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6.2.7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis:/data
+
+  rabbitmq:
+    image: rabbitmq:3.9.7
+    ports:
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=password
+
+volumes:
+  redis:
+  postgresql-test:

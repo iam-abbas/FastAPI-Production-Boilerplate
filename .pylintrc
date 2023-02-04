@@ -14,4 +14,6 @@ disable = missing-module-docstring,
           wrong-import-order,
           fixme,
           too-few-public-methods,
-          line-too-long
+          line-too-long,
+          unused-argument,
+          c-extension-no-member,

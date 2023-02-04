@@ -39,8 +39,7 @@ install: ## Install dependencies
 	poetry install
 
 .PHONY: run
-run: ## Run the application
-	start
+run: start
 
 .PHONY: start
 start: ## Starts the server
@@ -69,6 +68,21 @@ reset-database: ## Rollback all migrations
 	$(eval export $(sh sed 's/=.*//' .env))
 
 	poetry run alembic downgrade base
+
+.PHONY: generate-migration 
+generate-migration: ## Generate a new migration
+	$(eval include .env) 
+	$(eval export $(sh sed 's/=.*//' .env)) 
+
+	@read -p "Enter migration message: " message; \
+	poetry run alembic revision --autogenerate -m "$$message"
+
+.PHONY: celery-worker
+celery-worker: ## Start celery worker
+	$(eval include .env)
+	$(eval export $(sh sed 's/=.*//' .env))
+
+	poetry run celery -A worker worker -l info
 
 # Check, lint and format targets
 # ------------------------------
