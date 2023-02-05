@@ -3,9 +3,9 @@ from typing import Any, Generic, Type, TypeVar
 from uuid import UUID
 
 from sqlalchemy import Select, func
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-from sqlalchemy.sql.expression import select as sqla_select
+from sqlalchemy.sql.expression import select
 
 from core.database import Base
 
@@ -14,11 +14,11 @@ ModelType = TypeVar("ModelType", bound=Base)
 
 
 class BaseRepository(Generic[ModelType]):
-    def __init__(self, db: Session, model: Type[ModelType]):
+    def __init__(self, db: AsyncSession, model: Type[ModelType]):
         self.db = db
         self.model_class: Type[ModelType] = model
 
-    def create(self, attributes: dict[str, Any] = None) -> ModelType:
+    async def create(self, attributes: dict[str, Any] = None) -> ModelType:
         """Creates the model instance."""
         if not attributes:
             attributes = {}
@@ -28,32 +28,32 @@ class BaseRepository(Generic[ModelType]):
 
         return model
 
-    def get(self, id_: int, join_: set[str] | None = None) -> ModelType | None:
+    async def get(self, id_: int, join_: set[str] | None = None) -> ModelType | None:
         """Returns the model instance matching the id."""
-        select = self._callable(join_)
-        select = self._by_id(select, id_)
+        query = self._callable(join_)
+        query = self._get_by(query, "id", id_)
 
-        return self._one_or_none(select)
+        return self._one_or_none(query)
 
-    def get_by_uuid(
+    async def get_by_uuid(
         self, uuid: UUID, join_: set[str] | None = None
     ) -> ModelType | None:
         """Returns the model instance matching the uuid."""
-        select = self._callable(join_)
-        select = self._by_uuid(select, uuid)
+        query = self._callable(join_)
+        query = self._get_by(query, "uuid", uuid)
 
-        return self._one_or_none(select)
+        return self._one_or_none(query)
 
-    def get_multi(
+    async def get_multi(
         self, skip: int = 0, limit: int = 100, join_: set[str] | None = None
     ) -> list[ModelType]:
         """Returns a list of models based on pagination params."""
-        select = self._callable(join_)
-        select = select.offset(skip).limit(limit)
+        query = self._callable(join_)
+        query = query.offset(skip).limit(limit)
 
-        return self._all(select)
+        return self._all(query)
 
-    def update(self, model: ModelType, attributes: dict[str, Any]) -> ModelType:
+    async def update(self, model: ModelType, attributes: dict[str, Any]) -> ModelType:
         """Updates the model from attributes."""
 
         for field in attributes:
@@ -61,63 +61,63 @@ class BaseRepository(Generic[ModelType]):
 
         return model
 
-    def delete(self, model: ModelType) -> None:
+    async def delete(self, model: ModelType) -> None:
         """Deletes the model."""
         self.db.delete(model)
 
-    def _callable(
+    async def _callable(
         self,
         join_: set[str] | None = None,
         order_: dict | None = None,
     ) -> Select:
         """Returns a callable that can be used to query the model."""
-        select = sqla_select(self.model_class)
-        select = self._maybe_join(select, join_)
-        select = self._maybe_ordered(select, order_)
+        query = select(self.model_class)
+        query = self._maybe_join(query, join_)
+        query = self._maybe_ordered(query, order_)
 
-        return select
+        return query
 
-    def _all(self, select: Select) -> list[ModelType]:
+    async def _all(self, query: Select) -> list[ModelType]:
         """Returns all results from the query."""
-        if results := self._maybe_join_collection(select):
+        if results := self._maybe_join_collection(query):
             return results
 
-        return self.db.scalars(select).all()
+        return self.db.scalars(query).all()
 
-    def _first(self, select: Select) -> ModelType | None:
+    async def _first(self, query: Select) -> ModelType | None:
         """Returns the first result from the query."""
-        if results := self._maybe_join_collection(select):
+        if results := self._maybe_join_collection(query):
             return next(iter(results), None)
 
-        return self.db.scalars(select).first()
+        return self.db.scalars(query).first()
 
-    def _one_or_none(self, select: Select) -> ModelType | None:
+    async def _one_or_none(self, query: Select) -> ModelType | None:
         """Returns the first result from the query or None."""
-        if results := self._maybe_join_collection(select, limit_one=True):
+        if results := self._maybe_join_collection(query, limit_one=True):
             return next(iter(results), None)
 
-        return self.db.scalars(select).one_or_none()
+        return self.db.scalars(query).one_or_none()
 
-    def _one(self, select: Select) -> ModelType:
+    async def _one(self, query: Select) -> ModelType:
         """
         Returns the first result from the query or raises NoResultFound.
         """
-        if results := self._maybe_join_collection(select, limit_one=True):
+        if results := self._maybe_join_collection(query, limit_one=True):
             if result := next(iter(results), None):
                 return result
 
             raise NoResultFound
 
-        return self.db.scalars(select).one()
+        return self.db.scalars(query).one()
 
-    def _count(self, select: Select) -> int:
+    async def _count(self, query: Select) -> int:
         """Returns the count of the query."""
-        select = select.subquery()
-        return self.db.scalars(sqla_select(func.count()).select_from(select)).one()
+        query = query.subquery()
+        return self.db.scalars(select(func.count()).select_from(query)).one()
 
-    def _sort_by(
+    async def _sort_by(
         self,
-        select: Select,
+        query: Select,
         sort_by: str,
         order: str | None = "asc",
         model: Type[ModelType] | None = None,
@@ -134,48 +134,44 @@ class BaseRepository(Generic[ModelType]):
             order_column = getattr(model, sort_by)
 
         if order == "desc":
-            return select.order_by(order_column.desc())
+            return query.order_by(order_column.desc())
 
-        return select.order_by(order_column.asc())
+        return query.order_by(order_column.asc())
 
-    def _by_id(self, select: Select, id_: int) -> Select:
-        """Returns the query filtered by the given id."""
-        return select.filter(self.model_class.id == id_)
+    async def _get_by(self, query: Select, field: str, value: Any) -> Select:
+        """Returns the query filtered by the given field and value."""
+        return query.filter(getattr(self.model_class, field) == value)
 
-    def _by_uuid(self, select: Select, uuid: str) -> Select:
-        """Returns the query filtered by the given uuid."""
-        return select.filter(self.model_class.uuid == uuid)
-
-    def _maybe_join(self, select: Select, join_: set[str] | None = None) -> Select:
+    async def _maybe_join(self, query: Select, join_: set[str] | None = None) -> Select:
         """Returns the query with the given joins."""
         if not join_:
-            return select
+            return query
 
         if not isinstance(join_, set):
             raise TypeError("join_ must be a set")
 
-        return reduce(self._add_join_to_select, join_, select)
+        return reduce(self._add_join_to_query, join_, query)
 
-    def _maybe_ordered(self, select: Select, order_: dict | None = None) -> Select:
+    async def _maybe_ordered(self, query: Select, order_: dict | None = None) -> Select:
         """Returns the query ordered by the given column."""
         if order_:
             if order_["asc"]:
                 for order in order_["asc"]:
-                    select = select.order_by(getattr(self.model_class, order).asc())
+                    query = query.order_by(getattr(self.model_class, order).asc())
             else:
                 for order in order_["desc"]:
-                    select = select.order_by(getattr(self.model_class, order).desc())
+                    query = query.order_by(getattr(self.model_class, order).desc())
 
-        return select
+        return query
 
-    def _maybe_join_collection(
-        self, select: Select, limit_one: bool = False
+    async def _maybe_join_collection(
+        self, query: Select, limit_one: bool = False
     ) -> list[ModelType] | None:
         """Returns the results from the query if it contains a joined collection."""
-        execution_options = select.get_execution_options()
+        execution_options = query.get_execution_options()
 
         if execution_options.get("contains_joined_collection", False):
-            results = self.db.scalars(select).unique().all()
+            results = self.db.scalars(query).unique().all()
 
             if limit_one and len(results) > 1:
                 raise MultipleResultsFound
@@ -183,5 +179,5 @@ class BaseRepository(Generic[ModelType]):
             return results
         return None
 
-    def _add_join_to_select(self, select: Select, join_: set[str]) -> Select:
-        return getattr(self, "_join_" + join_)(select)
+    async def _add_join_to_query(self, query: Select, join_: set[str]) -> Select:
+        return getattr(self, "_join_" + join_)(query)
