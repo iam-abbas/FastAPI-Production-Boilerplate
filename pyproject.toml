@@ -24,6 +24,8 @@ black = "^23.1.0"
 pylint = "^2.16.1"
 asyncpg = "^0.27.0"
 dependency-injector = "^4.41.0"
+pytest = "^7.2.1"
+httpx = "^0.23.3"
 
 [tool.poetry.dev-dependencies]
 behave = "^1.2.6"

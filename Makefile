@@ -107,3 +107,10 @@ format: ## Run code formatter
 .PHONY: check-lockfile
 check-lockfile: ## Compares lock file with pyproject.toml
 	poetry lock --check
+
+.PHONY: test
+test: ## Run the test suite
+	$(eval include .env)
+	$(eval export $(sh sed 's/=.*//' .env))
+
+	poetry run pytest -vv -s ./

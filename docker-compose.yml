@@ -17,7 +17,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password123
-      POSTGRES_DB: fastapi-db-test
+      POSTGRES_DB: db-test
     ports:
       - "5431:5432"
     volumes:
