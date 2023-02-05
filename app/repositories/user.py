@@ -10,7 +10,7 @@ class UserRepository(BaseRepository[User]):
     User repository provides all the database operations for the User model.
     """
 
-    def get_by_username(
+    async def get_by_username(
         self, username: str, join_: set[str] | None = None
     ) -> User | None:
         """
@@ -20,11 +20,13 @@ class UserRepository(BaseRepository[User]):
         :param join_: Join relations.
         :return: User.
         """
-        query = self._callable(join_)
+        query = await self._callable(join_)
         query = query.filter(User.username == username)
-        return self._one_or_none(query)
+        return await self._one_or_none(query)
 
-    def get_by_email(self, email: str, join_: set[str] | None = None) -> User | None:
+    async def get_by_email(
+        self, email: str, join_: set[str] | None = None
+    ) -> User | None:
         """
         Get user by email.
 
@@ -32,11 +34,11 @@ class UserRepository(BaseRepository[User]):
         :param join_: Join relations.
         :return: User.
         """
-        query = self._callable(join_)
+        query = await self._callable(join_)
         query = query.filter(User.email == email)
-        return self._one_or_none(query)
+        return await self._one_or_none(query)
 
-    def _join_tasks(self, query: Select) -> Select:
+    async def _join_tasks(self, query: Select) -> Select:
         """
         Join tasks.
 

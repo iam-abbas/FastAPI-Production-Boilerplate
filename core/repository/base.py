@@ -3,55 +3,52 @@ from typing import Any, Generic, Type, TypeVar
 from uuid import UUID
 
 from sqlalchemy import Select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.sql.expression import select
 
-from core.database import Base
+from core.database import Base, session
 
 # pylint: disable-next=invalid-name
 ModelType = TypeVar("ModelType", bound=Base)
 
 
 class BaseRepository(Generic[ModelType]):
-    def __init__(self, db: AsyncSession, model: Type[ModelType]):
-        self.db = db
+    def __init__(self, model: Type[ModelType]):
+        self.session = session
         self.model_class: Type[ModelType] = model
 
     async def create(self, attributes: dict[str, Any] = None) -> ModelType:
         """Creates the model instance."""
-        if not attributes:
+        if attributes is None:
             attributes = {}
-
         model = self.model_class(**attributes)
-        self.db.add(model)
-
+        self.session.add(model)
         return model
 
     async def get(self, id_: int, join_: set[str] | None = None) -> ModelType | None:
         """Returns the model instance matching the id."""
-        query = self._callable(join_)
-        query = self._get_by(query, "id", id_)
+        query = await self._callable(join_)
+        query = await self._get_by(query, "id", id_)
 
-        return self._one_or_none(query)
+        return await self._one_or_none(query)
 
     async def get_by_uuid(
         self, uuid: UUID, join_: set[str] | None = None
     ) -> ModelType | None:
         """Returns the model instance matching the uuid."""
-        query = self._callable(join_)
-        query = self._get_by(query, "uuid", uuid)
+        query = await self._callable(join_)
+        query = await self._get_by(query, "uuid", uuid)
 
-        return self._one_or_none(query)
+        return await self._one_or_none(query)
 
     async def get_multi(
         self, skip: int = 0, limit: int = 100, join_: set[str] | None = None
     ) -> list[ModelType]:
         """Returns a list of models based on pagination params."""
-        query = self._callable(join_)
+        query = await self._callable(join_)
         query = query.offset(skip).limit(limit)
 
-        return self._all(query)
+        return await self._all(query)
 
     async def update(self, model: ModelType, attributes: dict[str, Any]) -> ModelType:
         """Updates the model from attributes."""
@@ -63,7 +60,7 @@ class BaseRepository(Generic[ModelType]):
 
     async def delete(self, model: ModelType) -> None:
         """Deletes the model."""
-        self.db.delete(model)
+        self.session.delete(model)
 
     async def _callable(
         self,
@@ -72,48 +69,53 @@ class BaseRepository(Generic[ModelType]):
     ) -> Select:
         """Returns a callable that can be used to query the model."""
         query = select(self.model_class)
-        query = self._maybe_join(query, join_)
-        query = self._maybe_ordered(query, order_)
+        query = await self._maybe_join(query, join_)
+        query = await self._maybe_ordered(query, order_)
 
         return query
 
     async def _all(self, query: Select) -> list[ModelType]:
         """Returns all results from the query."""
-        if results := self._maybe_join_collection(query):
+        if results := await self._maybe_join_collection(query):
             return results
 
-        return self.db.scalars(query).all()
+        query = await self.session.scalars(query)
+        return query.all()
 
     async def _first(self, query: Select) -> ModelType | None:
         """Returns the first result from the query."""
-        if results := self._maybe_join_collection(query):
+        if results := await self._maybe_join_collection(query):
             return next(iter(results), None)
 
-        return self.db.scalars(query).first()
+        query = await self.session.scalars(query)
+        return query.first()
 
     async def _one_or_none(self, query: Select) -> ModelType | None:
         """Returns the first result from the query or None."""
-        if results := self._maybe_join_collection(query, limit_one=True):
+        if results := await self._maybe_join_collection(query, limit_one=True):
             return next(iter(results), None)
 
-        return self.db.scalars(query).one_or_none()
+        query = await self.session.scalars(query)
+        return query.one_or_none()
 
     async def _one(self, query: Select) -> ModelType:
         """
         Returns the first result from the query or raises NoResultFound.
         """
-        if results := self._maybe_join_collection(query, limit_one=True):
+        if results := await self._maybe_join_collection(query, limit_one=True):
             if result := next(iter(results), None):
                 return result
 
             raise NoResultFound
 
-        return self.db.scalars(query).one()
+        query = await self.session.scalars(query)
+        return query.one()
 
     async def _count(self, query: Select) -> int:
         """Returns the count of the query."""
         query = query.subquery()
-        return self.db.scalars(select(func.count()).select_from(query)).one()
+        query = await self.session.scalars(select(func.count()).select_from(query))
+        return query.one()
 
     async def _sort_by(
         self,
@@ -171,7 +173,7 @@ class BaseRepository(Generic[ModelType]):
         execution_options = query.get_execution_options()
 
         if execution_options.get("contains_joined_collection", False):
-            results = self.db.scalars(query).unique().all()
+            results = self.session.scalars(query).unique().all()
 
             if limit_one and len(results) > 1:
                 raise MultipleResultsFound

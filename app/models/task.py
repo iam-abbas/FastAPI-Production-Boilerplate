@@ -19,3 +19,5 @@ class Task(Base, TimestampMixin):
 
     task_author_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
     author = relationship("User", back_populates="tasks", uselist=False, lazy="raise")
+
+    __mapper_args__ = {"eager_defaults": True}
