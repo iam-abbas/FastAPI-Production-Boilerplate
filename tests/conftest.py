@@ -2,13 +2,13 @@ import os
 from typing import Any, Generator
 
 import pytest
-from app.models import Base
-from core.server import create_app
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.models import Base
+from core.server import create_app
 
 SQLALCHEMY_DATABASE_URL = os.getenv("TEST_POSTGRES_URL")
 
