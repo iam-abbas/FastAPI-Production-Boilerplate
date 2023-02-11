@@ -12,6 +12,8 @@ from .access_control import (
     SystemPrincipal,
     UserPrincipal,
 )
+from .jwt import JWTHandler
+from .password import PasswordHandler
 
 __all__ = [
     "AccessControl",
@@ -26,4 +28,6 @@ __all__ = [
     "RolePrincipal",
     "SystemPrincipal",
     "UserPrincipal",
+    "JWTHandler",
+    "PasswordHandler",
 ]

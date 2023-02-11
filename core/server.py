@@ -10,7 +10,25 @@ from core.cache import Cache, CustomKeyMaker, RedisBackend
 from core.config import config
 from core.exceptions import CustomException
 from core.fastapi.dependencies import Logging
-from core.fastapi.middlewares import ResponseLoggerMiddleware, SQLAlchemyMiddleware
+from core.fastapi.middlewares import (
+    AuthBackend,
+    AuthenticationMiddleware,
+    ResponseLoggerMiddleware,
+    SQLAlchemyMiddleware,
+)
+
+
+def on_auth_error(request: Request, exc: Exception):
+    status_code, error_code, message = 401, None, str(exc)
+    if isinstance(exc, CustomException):
+        status_code = int(exc.code)
+        error_code = exc.error_code
+        message = exc.message
+
+    return JSONResponse(
+        status_code=status_code,
+        content={"error_code": error_code, "message": message},
+    )
 
 
 def init_routers(app_: FastAPI) -> None:
@@ -34,6 +52,11 @@ def make_middleware() -> List[Middleware]:
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
+        ),
+        Middleware(
+            AuthenticationMiddleware,
+            backend=AuthBackend(),
+            on_error=on_auth_error,
         ),
         Middleware(SQLAlchemyMiddleware),
         Middleware(ResponseLoggerMiddleware),

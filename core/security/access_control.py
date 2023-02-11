@@ -78,21 +78,21 @@ class AccessControl:
         self.user_principals_getter = user_principals_getter
         self.permission_exception = permission_exception
 
-    def enforce(self, permission: str):
+    def enforce(self, permissions: str):
         def _permission_dependency():
-            enforce = functools.partial(self._enforce, permission)
+            enforce = functools.partial(self._enforce, permissions)
             return enforce
 
         return _permission_dependency
 
-    def allowed(self, permission: str):
+    def allowed(self, permissions: str):
         def _permission_dependency():
-            allowed = functools.partial(self._allowed, permission)
+            allowed = functools.partial(self._allowed, permissions)
             return allowed
 
         return _permission_dependency
 
-    def _enforce(self, permission: str, resource: Any):
+    def _enforce(self, permissions: str, resource: Any):
         if not isinstance(resource, list):
             resource = [resource]
 
@@ -102,7 +102,7 @@ class AccessControl:
         for resource_obj in resource:
             if not self.has_permission(
                 principals=principals,
-                required_permission=permission,
+                required_permissions=permissions,
                 resource=resource_obj,
             ):
                 granted = False
@@ -111,7 +111,7 @@ class AccessControl:
         if not granted:
             raise self.permission_exception
 
-    def _allowed(self, permission: str, resource: Any):
+    def _allowed(self, permissions: str, resource: Any):
         if not isinstance(resource, list):
             resource = [resource]
 
@@ -121,7 +121,7 @@ class AccessControl:
         for resource_obj in resource:
             if self.has_permission(
                 principals=principals,
-                required_permission=permission,
+                required_permissions=permissions,
                 resource=resource_obj,
             ):
                 allowed_resources.append(resource)
@@ -129,12 +129,18 @@ class AccessControl:
         return allowed_resources
 
     def has_permission(
-        self, principals: List[Principal], required_permission: str, resource: Any
+        self, principals: List[Principal], required_permissions: str, resource: Any
     ):
         acl = self._acl(resource)
+        if not isinstance(required_permissions, list):
+            required_permissions = [required_permissions]
 
         for action, principal, permission in acl:
-            if (action == Allow and required_permission in permission) and (
+            is_required_permissions_in_permission = all(
+                required_permission in permission
+                for required_permission in required_permissions
+            )
+            if (action == Allow and is_required_permissions_in_permission) and (
                 principal in principals or principal == Everyone
             ):
                 return True

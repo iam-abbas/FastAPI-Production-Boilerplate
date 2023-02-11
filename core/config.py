@@ -25,6 +25,8 @@ class Config(BaseConfig):
     RELEASE_VERSION: str = "0.1"
     SHOW_SQL_ALCHEMY_QUERIES: int = 0
     SECRET_KEY: str = "super-secret-key"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 60 * 24
     CELERY_BROKER_URL: str = "amqp://rabbit:password@localhost:5672"
     CELERY_BACKEND_URL: str = "redis://localhost:6379/0"
 
