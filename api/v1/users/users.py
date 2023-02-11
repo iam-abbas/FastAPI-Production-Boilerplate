@@ -1,17 +1,18 @@
 from fastapi import APIRouter, Depends
+from pydantic import UUID4
 
 from api.v1.users.request import RegisterUserRequest
 from api.v1.users.response import UserResponse
 from app.controllers import UserController
 from app.models.user import UserPermission
 from core.factory import Factory
-from core.security import AccessControl, Everyone
+from core.security import AccessControl, Everyone, UserPrincipal
 
 user_router = APIRouter()
 
 
 def get_user_principals():
-    return [Everyone]
+    return [UserPrincipal(UUID4("0c533855-a503-4663-97f6-db40be14a17b")), Everyone]
 
 
 Permissions = AccessControl(user_principals_getter=get_user_principals)
@@ -20,10 +21,10 @@ Permissions = AccessControl(user_principals_getter=get_user_principals)
 @user_router.get("/")
 async def get_users(
     user_controller: UserController = Depends(Factory().get_user_controller),
-    enforce: AccessControl = Depends(Permissions(UserPermission.EDIT)),
+    enforce: AccessControl = Depends(Permissions.enforce(UserPermission.READ)),
 ) -> list[UserResponse]:
     users = await user_controller.get_multi()
-    enforce(users[1])
+    enforce(users)
 
     return users
 

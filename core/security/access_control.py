@@ -78,20 +78,55 @@ class AccessControl:
         self.user_principals_getter = user_principals_getter
         self.permission_exception = permission_exception
 
-    def __call__(self, permission: str):
+    def enforce(self, permission: str):
         def _permission_dependency():
-            enforce = functools.partial(self.enforce, permission)
+            enforce = functools.partial(self._enforce, permission)
             return enforce
 
         return _permission_dependency
 
-    def enforce(self, permission: str, resource: Any):
-        if not self.has_permission(
-            principals=self.user_principals_getter(),
-            required_permission=permission,
-            resource=resource,
-        ):
+    def allowed(self, permission: str):
+        def _permission_dependency():
+            allowed = functools.partial(self._allowed, permission)
+            return allowed
+
+        return _permission_dependency
+
+    def _enforce(self, permission: str, resource: Any):
+        if not isinstance(resource, list):
+            resource = [resource]
+
+        granted = True
+        principals = self.user_principals_getter()
+
+        for resource_obj in resource:
+            if not self.has_permission(
+                principals=principals,
+                required_permission=permission,
+                resource=resource_obj,
+            ):
+                granted = False
+                break
+
+        if not granted:
             raise self.permission_exception
+
+    def _allowed(self, permission: str, resource: Any):
+        if not isinstance(resource, list):
+            resource = [resource]
+
+        allowed_resources = []
+        principals = self.user_principals_getter()
+
+        for resource_obj in resource:
+            if self.has_permission(
+                principals=principals,
+                required_permission=permission,
+                resource=resource_obj,
+            ):
+                allowed_resources.append(resource)
+
+        return allowed_resources
 
     def has_permission(
         self, principals: List[Principal], required_permission: str, resource: Any
