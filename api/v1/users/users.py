@@ -3,16 +3,29 @@ from fastapi import APIRouter, Depends
 from api.v1.users.request import RegisterUserRequest
 from api.v1.users.response import UserResponse
 from app.controllers import UserController
+from app.models.user import UserPermission
 from core.factory import Factory
+from core.security import AccessControl, Everyone
 
 user_router = APIRouter()
+
+
+def get_user_principals():
+    return [Everyone]
+
+
+Permissions = AccessControl(user_principals_getter=get_user_principals)
 
 
 @user_router.get("/")
 async def get_users(
     user_controller: UserController = Depends(Factory().get_user_controller),
+    enforce: AccessControl = Depends(Permissions(UserPermission.EDIT)),
 ) -> list[UserResponse]:
-    return await user_controller.get_multi()
+    users = await user_controller.get_multi()
+    enforce(users[1])
+
+    return users
 
 
 @user_router.post("/")
