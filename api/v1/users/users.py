@@ -6,13 +6,13 @@ from api.v1.users.response import UserResponse
 from app.controllers import UserController
 from app.models.user import UserPermission
 from core.factory import Factory
-from core.security import AccessControl, Everyone, UserPrincipal
+from core.security import AccessControl, Everyone
 
 user_router = APIRouter()
 
 
 def get_user_principals():
-    return [UserPrincipal(UUID4("0c533855-a503-4663-97f6-db40be14a17b")), Everyone]
+    return [Everyone]
 
 
 Permissions = AccessControl(user_principals_getter=get_user_principals)
