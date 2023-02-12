@@ -20,6 +20,3 @@ class Factory:
 
     def get_task_controller(self):
         return TaskController(task_repository=self.task_repository)
-
-
-factory = Factory()

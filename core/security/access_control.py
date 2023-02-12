@@ -78,17 +78,10 @@ class AccessControl:
         self.user_principals_getter = user_principals_getter
         self.permission_exception = permission_exception
 
-    def enforce(self, permissions: str):
+    def __call__(self, permissions: str):
         def _permission_dependency():
             enforce = functools.partial(self._enforce, permissions)
             return enforce
-
-        return _permission_dependency
-
-    def allowed(self, permissions: str):
-        def _permission_dependency():
-            allowed = functools.partial(self._allowed, permissions)
-            return allowed
 
         return _permission_dependency
 
@@ -111,7 +104,7 @@ class AccessControl:
         if not granted:
             raise self.permission_exception
 
-    def _allowed(self, permissions: str, resource: Any):
+    def return_allowed(self, permissions: str, resource: Any):
         if not isinstance(resource, list):
             resource = [resource]
 
