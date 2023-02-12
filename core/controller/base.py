@@ -7,7 +7,6 @@ from core.database import Base, Propagation, Transactional
 from core.exceptions import NotFoundException
 from core.repository import BaseRepository
 
-# pylint: disable-next=invalid-name
 ModelType = TypeVar("ModelType", bound=Base)
 
 
@@ -18,13 +17,13 @@ class BaseController(Generic[ModelType]):
         self.model_class = model
         self.repository = repository
 
-    async def get(self, id_: int, join_: set[str] | None = None) -> ModelType:
+    async def get_by_id(self, id_: int, join_: set[str] | None = None) -> ModelType:
         """Returns the model instance matching the id."""
 
-        db_obj = await self.repository.get(id_, join_)
+        db_obj = await self.repository.get_by(field="id", value=id_, join_=join_)
         if not db_obj:
             raise NotFoundException(
-                f"{self.model_class.__tablename__.title()} with id: {id_} does not exist"
+                f"{self.model_class.__tablename__.title()} with id: {id} does not exist"
             )
 
         return db_obj
@@ -32,18 +31,18 @@ class BaseController(Generic[ModelType]):
     async def get_by_uuid(self, uuid: UUID, join_: set[str] | None = None) -> ModelType:
         """Returns the model instance matching the id."""
 
-        db_obj = await self.repository.get_by_uuid(uuid, join_)
+        db_obj = await self.repository.get_by(field="uuid", value=uuid, join_=join_)
         if not db_obj:
             raise NotFoundException(
                 f"{self.model_class.__tablename__.title()} with id: {uuid} does not exist"
             )
         return db_obj
 
-    async def get_multi(
+    async def get_all(
         self, skip: int = 0, limit: int = 100, join_: set[str] | None = None
     ) -> list[ModelType]:
         """Returns a list of models based on pagination params."""
-        response = await self.repository.get_multi(skip, limit, join_)
+        response = await self.repository.get_all(skip, limit, join_)
         return response
 
     @Transactional(propagation=Propagation.REQUIRED)

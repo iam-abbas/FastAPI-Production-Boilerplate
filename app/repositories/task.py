@@ -16,7 +16,7 @@ class TaskRepository(BaseRepository[Task]):
         """
         Get all tasks by author id.
         """
-        query = self._callable(join_)
+        query = self._query(join_)
         query = self._get_by(query, "author_id", author_id)
 
         return self._all(query)

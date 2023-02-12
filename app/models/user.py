@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 
 from core.database import Base
 from core.database.mixins import TimestampMixin
-from core.security import Allow, Everyone, RolePrincipal, UserPrincipal
+from core.security.access_control import Allow, Everyone, RolePrincipal, UserPrincipal
 
 
 class UserPermission(Enum):
@@ -25,7 +25,7 @@ class User(Base, TimestampMixin):
 
         return [
             (Allow, Everyone, basic_permissions),
-            (Allow, UserPrincipal(value=self.uuid), self_permissions),
+            (Allow, UserPrincipal(value=self.id), self_permissions),
             (Allow, RolePrincipal(value="admin"), all_permissions),
         ]
 

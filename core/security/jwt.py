@@ -35,10 +35,10 @@ class JWTHandler:
             return jwt.decode(
                 token, JWTHandler.secret_key, algorithms=[JWTHandler.algorithm]
             )
-        except ExpiredSignatureError:
-            raise JWTExpiredError()
-        except JWTError:
-            raise JWTDecodeError()
+        except ExpiredSignatureError as exception:
+            raise JWTExpiredError() from exception
+        except JWTError as exception:
+            raise JWTDecodeError() from exception
 
     @staticmethod
     def decode_expired(token: str) -> dict:
@@ -49,5 +49,5 @@ class JWTHandler:
                 algorithms=[JWTHandler.algorithm],
                 options={"verify_exp": False},
             )
-        except JWTError:
-            raise JWTDecodeError()
+        except JWTError as exception:
+            raise JWTDecodeError() from exception

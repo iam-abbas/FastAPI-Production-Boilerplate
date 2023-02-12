@@ -20,7 +20,7 @@ class UserRepository(BaseRepository[User]):
         :param join_: Join relations.
         :return: User.
         """
-        query = await self._callable(join_)
+        query = await self._query(join_)
         query = query.filter(User.username == username)
         return await self._one_or_none(query)
 
@@ -34,7 +34,7 @@ class UserRepository(BaseRepository[User]):
         :param join_: Join relations.
         :return: User.
         """
-        query = await self._callable(join_)
+        query = await self._query(join_)
         query = query.filter(User.email == email)
         return await self._one_or_none(query)
 

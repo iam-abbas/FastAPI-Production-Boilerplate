@@ -8,25 +8,20 @@ from app.schemas.responses.users import UserResponse
 from core.factory import Factory
 from core.fastapi.dependencies import AuthenticationRequired
 from core.fastapi.dependencies.current_user import get_current_user
-from core.security import AccessControl, Everyone
+from core.fastapi.dependencies.permissions import Permissions
+from core.security import AccessControl
 
 user_router = APIRouter()
-
-
-def get_user_principals():
-    return [Everyone]
-
-
-Permissions = AccessControl(user_principals_getter=get_user_principals)
 
 
 @user_router.get("/", dependencies=[Depends(AuthenticationRequired)])
 async def get_users(
     user_controller: UserController = Depends(Factory().get_user_controller),
-    assert_permissions: AccessControl = Depends(Permissions(UserPermission.READ)),
+    assert_access: AccessControl = Depends(Permissions(UserPermission.READ)),
 ) -> list[UserResponse]:
-    users = await user_controller.get_multi()
-    assert_permissions(users)
+    users = await user_controller.get_all()
+    assert_access(resource=users)
+
     return users
 
 

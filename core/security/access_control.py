@@ -2,7 +2,7 @@ import functools
 from dataclasses import dataclass
 from typing import Any, List
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
 from starlette.status import HTTP_403_FORBIDDEN
 
 Allow: str = "allow"
@@ -79,18 +79,19 @@ class AccessControl:
         self.permission_exception = permission_exception
 
     def __call__(self, permissions: str):
-        def _permission_dependency():
-            enforce = functools.partial(self._enforce, permissions)
-            return enforce
+        def _permission_dependency(principals=Depends(self.user_principals_getter)):
+            assert_access = functools.partial(
+                self.assert_access, principals, permissions
+            )
+            return assert_access
 
         return _permission_dependency
 
-    def _enforce(self, permissions: str, resource: Any):
+    def assert_access(self, principals: list, permissions: str, resource: Any):
         if not isinstance(resource, list):
             resource = [resource]
 
         granted = True
-        principals = self.user_principals_getter()
 
         for resource_obj in resource:
             if not self.has_permission(
@@ -103,23 +104,6 @@ class AccessControl:
 
         if not granted:
             raise self.permission_exception
-
-    def return_allowed(self, permissions: str, resource: Any):
-        if not isinstance(resource, list):
-            resource = [resource]
-
-        allowed_resources = []
-        principals = self.user_principals_getter()
-
-        for resource_obj in resource:
-            if self.has_permission(
-                principals=principals,
-                required_permissions=permissions,
-                resource=resource_obj,
-            ):
-                allowed_resources.append(resource)
-
-        return allowed_resources
 
     def has_permission(
         self, principals: List[Principal], required_permissions: str, resource: Any
