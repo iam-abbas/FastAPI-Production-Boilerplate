@@ -1,3 +1,4 @@
+from enum import Enum
 from uuid import uuid4
 
 from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, String
@@ -6,6 +7,19 @@ from sqlalchemy.orm import relationship
 
 from core.database import Base
 from core.database.mixins import TimestampMixin
+from core.security.access_control import (
+    Allow,
+    Authenticated,
+    RolePrincipal,
+    UserPrincipal,
+)
+
+
+class TaskPermission(Enum):
+    CREATE = "create"
+    READ = "read"
+    EDIT = "edit"
+    DELETE = "delete"
 
 
 class Task(Base, TimestampMixin):
@@ -21,3 +35,18 @@ class Task(Base, TimestampMixin):
     author = relationship("User", back_populates="tasks", uselist=False, lazy="raise")
 
     __mapper_args__ = {"eager_defaults": True}
+
+    def __acl__(self):
+        basic_permissions = [TaskPermission.CREATE]
+        self_permissions = [
+            TaskPermission.READ,
+            TaskPermission.EDIT,
+            TaskPermission.DELETE,
+        ]
+        all_permissions = list(TaskPermission)
+
+        return [
+            (Allow, Authenticated, basic_permissions),
+            (Allow, UserPrincipal(self.task_author_id), self_permissions),
+            (Allow, RolePrincipal("admin"), all_permissions),
+        ]

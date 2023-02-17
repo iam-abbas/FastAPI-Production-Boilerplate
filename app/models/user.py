@@ -18,17 +18,6 @@ class UserPermission(Enum):
 
 
 class User(Base, TimestampMixin):
-    def __acl__(self):
-        basic_permissions = [UserPermission.READ]
-        self_permissions = [UserPermission.READ, UserPermission.EDIT]
-        all_permissions = list(UserPermission)
-
-        return [
-            (Allow, Everyone, basic_permissions),
-            (Allow, UserPrincipal(value=self.id), self_permissions),
-            (Allow, RolePrincipal(value="admin"), all_permissions),
-        ]
-
     __tablename__ = "users"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -41,3 +30,18 @@ class User(Base, TimestampMixin):
     tasks = relationship("Task", back_populates="author", lazy="raise")
 
     __mapper_args__ = {"eager_defaults": True}
+
+    def __acl__(self):
+        basic_permissions = [UserPermission.READ, UserPermission.CREATE]
+        self_permissions = [
+            UserPermission.READ,
+            UserPermission.EDIT,
+            UserPermission.CREATE,
+        ]
+        all_permissions = list(UserPermission)
+
+        return [
+            (Allow, Everyone, basic_permissions),
+            (Allow, UserPrincipal(value=self.id), self_permissions),
+            (Allow, RolePrincipal(value="admin"), all_permissions),
+        ]

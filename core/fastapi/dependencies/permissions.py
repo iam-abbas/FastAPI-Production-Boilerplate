@@ -33,7 +33,7 @@ async def get_user_principals(
     user = await user_controller.get_by_id(id_=user_id)
 
     principals.append(Authenticated)
-    principals.append(UserPrincipal(user.uuid))
+    principals.append(UserPrincipal(user.id))
 
     if user.is_admin:
         principals.append(RolePrincipal("admin"))

@@ -10,6 +10,8 @@ ModelType = TypeVar("ModelType", bound=Base)
 
 
 class BaseRepository(Generic[ModelType]):
+    """Base class for data repositories."""
+
     def __init__(self, model: Type[ModelType]):
         self.session = session
         self.model_class: Type[ModelType] = model
@@ -44,7 +46,11 @@ class BaseRepository(Generic[ModelType]):
         return await self._all(query)
 
     async def get_by(
-        self, field: str, value: Any, join_: set[str] | None = None
+        self,
+        field: str,
+        value: Any,
+        join_: set[str] | None = None,
+        unique: bool = False,
     ) -> ModelType:
         """
         Returns the model instance matching the field and value.
@@ -55,21 +61,12 @@ class BaseRepository(Generic[ModelType]):
         :return: The model instance.
         """
         query = await self._query(join_)
-        return await self._get_by(query, field, value)
+        query = await self._get_by(query, field, value)
 
-    async def update(self, model: ModelType, attributes: dict[str, Any]) -> ModelType:
-        """
-        Updates the model from attributes.
+        if unique:
+            return await self._one(query)
 
-        :param model: The model to update.
-        :param attributes: The attributes to update the model with.
-        :return: The updated model instance.
-        """
-
-        for field in attributes:
-            setattr(model, field, attributes[field])
-
-        return model
+        return await self._all(query)
 
     async def delete(self, model: ModelType) -> None:
         """

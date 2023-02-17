@@ -113,10 +113,11 @@ class AccessControl:
             required_permissions = [required_permissions]
 
         for action, principal, permission in acl:
-            is_required_permissions_in_permission = all(
+            is_required_permissions_in_permission = any(
                 required_permission in permission
                 for required_permission in required_permissions
             )
+
             if (action == Allow and is_required_permissions_in_permission) and (
                 principal in principals or principal == Everyone
             ):
