@@ -24,7 +24,7 @@ async def get_tasks(
     return tasks
 
 
-@task_router.post("/", response_model=TaskResponse)
+@task_router.post("/", response_model=TaskResponse, status_code=201)
 async def create_task(
     request: Request,
     task_create: TaskCreate,

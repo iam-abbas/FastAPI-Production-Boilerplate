@@ -26,7 +26,7 @@ async def get_users(
     return users
 
 
-@user_router.post("/")
+@user_router.post("/", status_code=201)
 async def register_user(
     register_user_request: RegisterUserRequest,
     auth_controller: AuthController = Depends(Factory().get_auth_controller),

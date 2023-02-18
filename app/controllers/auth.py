@@ -5,7 +5,7 @@ from app.repositories import UserRepository
 from app.schemas.extras.token import Token
 from core.controller import BaseController
 from core.database import Propagation, Transactional
-from core.exceptions import UnauthorizedException, UnprocessableEntity
+from core.exceptions import BadRequestException, UnauthorizedException
 from core.security import JWTHandler, PasswordHandler
 
 
@@ -20,13 +20,13 @@ class AuthController(BaseController[User]):
         user = await self.user_repository.get_by_email(email)
 
         if user:
-            raise UnprocessableEntity("User already exists with this email")
+            raise BadRequestException("User already exists with this email")
 
         # Check if user exists with username
         user = await self.user_repository.get_by_username(username)
 
         if user:
-            raise UnprocessableEntity("User already exists with this username")
+            raise BadRequestException("User already exists with this username")
 
         password = PasswordHandler.hash(password)
 
@@ -42,10 +42,10 @@ class AuthController(BaseController[User]):
         user = await self.user_repository.get_by_email(email)
 
         if not user:
-            raise UnprocessableEntity("Invalid credentials")
+            raise BadRequestException("Invalid credentials")
 
         if not PasswordHandler.verify(user.password, password):
-            raise UnprocessableEntity("Invalid credentials")
+            raise BadRequestException("Invalid credentials")
 
         return Token(
             access_token=JWTHandler.encode(payload={"user_id": user.id}),
