@@ -6,7 +6,7 @@ from tests.utils.login import _create_user_and_login
 
 
 @pytest.mark.asyncio
-async def test_create_task(client: AsyncClient) -> None:
+async def test_create_task(client: AsyncClient, db_session) -> None:
     """Test task creation."""
     await _create_user_and_login(client)
 
@@ -19,7 +19,7 @@ async def test_create_task(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_task_with_invalid_title(client: AsyncClient) -> None:
+async def test_create_task_with_invalid_title(client: AsyncClient, db_session) -> None:
     """Test task creation with invalid title."""
     await _create_user_and_login(client)
 
@@ -32,7 +32,9 @@ async def test_create_task_with_invalid_title(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_task_with_invalid_description(client: AsyncClient) -> None:
+async def test_create_task_with_invalid_description(
+    client: AsyncClient, db_session
+) -> None:
     """Test task creation with invalid description."""
     await _create_user_and_login(client)
 
@@ -45,7 +47,7 @@ async def test_create_task_with_invalid_description(client: AsyncClient) -> None
 
 
 @pytest.mark.asyncio
-async def get_all_tasks(client: AsyncClient) -> None:
+async def get_all_tasks(client: AsyncClient, db_session) -> None:
     """Test get all tasks."""
     await _create_user_and_login(client)
 

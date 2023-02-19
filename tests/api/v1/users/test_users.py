@@ -6,7 +6,7 @@ from tests.utils.login import _create_user_and_login
 
 
 @pytest.mark.asyncio
-async def test_create_user(client: AsyncClient) -> None:
+async def test_create_user(client: AsyncClient, db_session) -> None:
     """Test user creation."""
     fake_user = create_fake_user()
     response = await client.post("/v1/users/", json=fake_user)
@@ -17,7 +17,7 @@ async def test_create_user(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_user_with_existing_email(client: AsyncClient) -> None:
+async def test_create_user_with_existing_email(client: AsyncClient, db_session) -> None:
     """Test user creation with existing email."""
     fake_user = create_fake_user()
 
@@ -29,7 +29,9 @@ async def test_create_user_with_existing_email(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_user_with_existing_username(client: AsyncClient) -> None:
+async def test_create_user_with_existing_username(
+    client: AsyncClient, db_session
+) -> None:
     """Test user creation with existing username."""
     fake_user = create_fake_user()
 
@@ -41,7 +43,7 @@ async def test_create_user_with_existing_username(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_user_with_invalid_email(client: AsyncClient) -> None:
+async def test_create_user_with_invalid_email(client: AsyncClient, db_session) -> None:
     """Test user creation with invalid email."""
     fake_user = create_fake_user()
     fake_user["email"] = "invalid_email"
@@ -52,7 +54,9 @@ async def test_create_user_with_invalid_email(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_user_with_invalid_username(client: AsyncClient) -> None:
+async def test_create_user_with_invalid_username(
+    client: AsyncClient, db_session
+) -> None:
     """Test user creation with invalid username."""
     fake_user = create_fake_user()
     fake_user["username"] = "<invalid_username>"
@@ -63,7 +67,9 @@ async def test_create_user_with_invalid_username(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_user_with_invalid_password(client: AsyncClient) -> None:
+async def test_create_user_with_invalid_password(
+    client: AsyncClient, db_session
+) -> None:
     """Test user creation with invalid password."""
     fake_user = create_fake_user()
     fake_user["password"] = "123"
@@ -74,7 +80,7 @@ async def test_create_user_with_invalid_password(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_user_login(client: AsyncClient) -> None:
+async def test_user_login(client: AsyncClient, db_session) -> None:
     """Test user login."""
     fake_user = create_fake_user()
 
@@ -87,7 +93,7 @@ async def test_user_login(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_user_login_with_invalid_email(client: AsyncClient) -> None:
+async def test_user_login_with_invalid_email(client: AsyncClient, db_session) -> None:
     """Test user login with invalid email."""
     fake_user = create_fake_user()
     fake_user["email"] = "invalid_email"
@@ -98,7 +104,9 @@ async def test_user_login_with_invalid_email(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_user_login_with_invalid_password(client: AsyncClient) -> None:
+async def test_user_login_with_invalid_password(
+    client: AsyncClient, db_session
+) -> None:
     """Test user login with invalid password."""
     fake_user = create_fake_user()
     fake_user["password"] = "1"
@@ -109,7 +117,7 @@ async def test_user_login_with_invalid_password(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_all_users(client: AsyncClient) -> None:
+async def test_get_all_users(client: AsyncClient, db_session) -> None:
     """Test get all users."""
 
     await _create_user_and_login(client)
@@ -121,7 +129,7 @@ async def test_get_all_users(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_unauthorized_get_all_users(client: AsyncClient) -> None:
+async def test_unauthorized_get_all_users(client: AsyncClient, db_session) -> None:
     """Test get all users."""
 
     # Clear headers
@@ -133,7 +141,7 @@ async def test_unauthorized_get_all_users(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_me(client: AsyncClient) -> None:
+async def test_get_me(client: AsyncClient, db_session) -> None:
     """Test get me."""
     fake_user = create_fake_user()
 

@@ -31,7 +31,9 @@ class Task(Base, TimestampMixin):
     description = Column(String(255), nullable=False)
     is_completed = Column(Boolean, default=False, nullable=False)
 
-    task_author_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
+    task_author_id = Column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     author = relationship("User", back_populates="tasks", uselist=False, lazy="raise")
 
     __mapper_args__ = {"eager_defaults": True}

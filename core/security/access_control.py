@@ -88,52 +88,62 @@ class AccessControl:
         return _permission_dependency
 
     def assert_access(self, principals: list, permissions: str, resource: Any):
-        if not isinstance(resource, list):
-            resource = [resource]
-
-        granted = True
-
-        for resource_obj in resource:
-            if not self.has_permission(
-                principals=principals,
-                required_permissions=permissions,
-                resource=resource_obj,
-            ):
-                granted = False
-                break
-
-        if not granted:
+        if not self.has_permission(
+            principals=principals,
+            required_permissions=permissions,
+            resource=resource,
+        ):
             raise self.permission_exception
 
     def has_permission(
         self, principals: List[Principal], required_permissions: str, resource: Any
     ):
-        acl = self._acl(resource)
-        if not isinstance(required_permissions, list):
-            required_permissions = [required_permissions]
+        if not isinstance(resource, list):
+            resource = [resource]
 
-        for action, principal, permission in acl:
-            is_required_permissions_in_permission = any(
-                required_permission in permission
-                for required_permission in required_permissions
-            )
+        permits = []
+        for resource_obj in resource:
+            granted = False
+            acl = self._acl(resource_obj)
+            if not isinstance(required_permissions, list):
+                required_permissions = [required_permissions]
 
-            if (action == Allow and is_required_permissions_in_permission) and (
-                principal in principals or principal == Everyone
-            ):
-                return True
+            for action, principal, permission in acl:
+                is_required_permissions_in_permission = any(
+                    required_permission in permission
+                    for required_permission in required_permissions
+                )
 
-        return False
+                if (action == Allow and is_required_permissions_in_permission) and (
+                    principal in principals or principal == Everyone
+                ):
+                    granted = True
+                    break
+
+            permits.append(granted)
+
+        return all(permits)
 
     def show_permissions(self, principals: List[Principal], resource: Any):
-        acl = self._acl(resource)
-        permissions = []
-        for action, principal, permission in acl:
-            if action == Allow and principal in principals or principal == Everyone:
-                permissions.append(permission)
+        if not isinstance(resource, list):
+            resource = [resource]
 
-        permissions = list(set(self._flatten(permissions)))
-        return permissions
+        permissions = []
+        for resource_obj in resource:
+            local_permissions = []
+            acl = self._acl(resource_obj)
+
+            for action, principal, permission in acl:
+                if action == Allow and principal in principals or principal == Everyone:
+                    local_permissions.append(permission)
+
+            permissions.append(local_permissions)
+
+        # get intersection of permissions
+        permissions = [self._flatten(permission) for permission in permissions]
+        permissions = functools.reduce(set.intersection, map(set, permissions))
+
+        return list(permissions)
 
     def _acl(self, resource):
         acl = getattr(resource, "__acl__", [])

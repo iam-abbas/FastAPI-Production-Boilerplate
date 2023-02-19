@@ -27,7 +27,9 @@ class User(Base, TimestampMixin):
     username = Column(Unicode(255), nullable=False, unique=True)
     is_admin = Column(Boolean, default=False)
 
-    tasks = relationship("Task", back_populates="author", lazy="raise")
+    tasks = relationship(
+        "Task", back_populates="author", lazy="raise", passive_deletes=True
+    )
 
     __mapper_args__ = {"eager_defaults": True}
 
