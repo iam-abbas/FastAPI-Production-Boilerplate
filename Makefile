@@ -113,4 +113,4 @@ test: ## Run the test suite
 	$(eval include .env)
 	$(eval export $(sh sed 's/=.*//' .env))
 
-	poetry run pytest -vv -s ./
+	poetry run pytest -vv -s --cache-clear ./

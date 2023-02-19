@@ -50,4 +50,12 @@ session: Union[AsyncSession, async_scoped_session] = async_scoped_session(
     scopefunc=get_session_context,
 )
 
+
+async def get_session() -> Union[AsyncSession, async_scoped_session]:
+    """
+    Function to get the session for FastAPI dependency injection
+    """
+    return session
+
+
 Base = declarative_base()

@@ -1,6 +1,21 @@
 from app.controllers import AuthController, TaskController, UserController
 from app.models import Task, User
 from app.repositories import TaskRepository, UserRepository
+from core.database import session
+from fastapi import Depends
+from functools import partial
+
+
+async def get_session():
+    """
+    Get the database session.
+
+    :return: The database session.
+    """
+    try:
+        yield session
+    finally:
+        await session.close()
 
 
 class Factory:
@@ -10,14 +25,16 @@ class Factory:
     """
 
     # Repositories
-    task_repository = TaskRepository(Task)
-    user_repository = UserRepository(User)
+    task_repository = partial(TaskRepository, Task)
+    user_repository = partial(UserRepository, User)
 
-    def get_user_controller(self):
-        return UserController(user_repository=self.user_repository)
+    def get_user_controller(self, db_session=Depends(get_session)):
+        return UserController(user_repository=self.user_repository(session=db_session))
 
-    def get_task_controller(self):
-        return TaskController(task_repository=self.task_repository)
+    def get_task_controller(self, db_session=Depends(get_session)):
+        return TaskController(task_repository=self.task_repository(session=db_session))
 
-    def get_auth_controller(self):
-        return AuthController(user_repository=self.user_repository)
+    def get_auth_controller(self, db_session=Depends(get_session)):
+        return AuthController(
+            user_repository=self.user_repository(session=db_session),
+        )

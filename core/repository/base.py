@@ -13,7 +13,7 @@ ModelType = TypeVar("ModelType", bound=Base)
 class BaseRepository(Generic[ModelType]):
     """Base class for data repositories."""
 
-    def __init__(self, model: Type[ModelType], session: AsyncSession = session):
+    def __init__(self, model: Type[ModelType], session: AsyncSession):
         self.session = session
         self.model_class: Type[ModelType] = model
 
