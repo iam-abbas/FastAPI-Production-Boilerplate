@@ -1,9 +1,9 @@
 from .session import (
     Base,
+    get_session,
     reset_session_context,
     session,
     set_session_context,
-    get_session,
 )
 from .standalone_session import standalone_session
 from .transactional import Propagation, Transactional

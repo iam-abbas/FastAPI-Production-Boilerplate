@@ -1,9 +1,11 @@
+from functools import partial
+
+from fastapi import Depends
+
 from app.controllers import AuthController, TaskController, UserController
 from app.models import Task, User
 from app.repositories import TaskRepository, UserRepository
 from core.database import session
-from fastapi import Depends
-from functools import partial
 
 
 async def get_session():

@@ -7,6 +7,7 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+import core.database.transactional as transactional
 from app.models import Base
 from core.config import config
 
@@ -32,10 +33,11 @@ async def db_session() -> AsyncSession:
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
+        transactional.session = s
         yield s
 
     async with async_engine.begin() as conn:
-        # await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.drop_all)
         pass
 
     await async_engine.dispose()
