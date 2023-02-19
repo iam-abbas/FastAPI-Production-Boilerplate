@@ -1,4 +1,3 @@
-import asyncio
 import os
 from typing import Any, Generator
 
@@ -16,25 +15,20 @@ if not SQLALCHEMY_DATABASE_URL:
 
 
 @pytest.fixture(scope="session")
-def event_loop(request) -> Generator:
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
 def app() -> Generator[FastAPI, Any, None]:
     """
     Create a new FastAPI app
     """
     app = create_app()
+
     yield app
 
 
 @pytest_asyncio.fixture
-async def client(app: FastAPI) -> AsyncClient:
+async def client(app: FastAPI, db_session) -> AsyncClient:
     """
     Create a new FastAPI AsyncClient
     """
+
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
