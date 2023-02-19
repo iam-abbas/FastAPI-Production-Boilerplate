@@ -261,6 +261,6 @@ This project is licensed under the terms of the MIT license. See the LICENSE fil
 
 ## Acknowledgements
 
-- This project uses several components from [@teamhide's boiler plate](https://github.com/teamhide/fastapi-boilerplate]
+- This project uses several components from [teamhide/fastapi-boilerplate](https://github.com/teamhide/fastapi-boilerplate]
 - The row level access control is inspired by [fastapi-permissions](https://github.com/holgi/fastapi-permissions)
 - CRUD pattern is inspired by [full-stack-fastapi-postgresql](https://github.com/tiangolo/full-stack-fastapi-postgresql)
