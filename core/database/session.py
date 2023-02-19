@@ -51,11 +51,17 @@ session: Union[AsyncSession, async_scoped_session] = async_scoped_session(
 )
 
 
-async def get_session() -> Union[AsyncSession, async_scoped_session]:
+async def get_session():
     """
-    Function to get the session for FastAPI dependency injection
+    Get the database session.
+    This can be used for dependency injection.
+
+    :return: The database session.
     """
-    return session
+    try:
+        yield session
+    finally:
+        await session.close()
 
 
 Base = declarative_base()

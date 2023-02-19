@@ -11,7 +11,7 @@ fake = Faker()
 class TestBaseRepository:
     @pytest_asyncio.fixture
     async def repository(self, db_session):
-        return BaseRepository(model=User, session=db_session)
+        return BaseRepository(model=User, db_session=db_session)
 
     @pytest.mark.asyncio
     async def test_create(self, repository):

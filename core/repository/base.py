@@ -5,7 +5,7 @@ from sqlalchemy import Select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select
 
-from core.database import Base, session
+from core.database import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 
@@ -13,8 +13,8 @@ ModelType = TypeVar("ModelType", bound=Base)
 class BaseRepository(Generic[ModelType]):
     """Base class for data repositories."""
 
-    def __init__(self, model: Type[ModelType], session: AsyncSession):
-        self.session = session
+    def __init__(self, model: Type[ModelType], db_session: AsyncSession):
+        self.session = db_session
         self.model_class: Type[ModelType] = model
 
     async def create(self, attributes: dict[str, Any] = None) -> ModelType:
