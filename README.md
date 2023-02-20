@@ -38,7 +38,7 @@ This boilerplate follows a layered architecture that includes a model layer, a r
 
 You need following to run this project:
 
-- Pythion 3.11
+- Python 3.11
 - [Docker with Docker Compose](https://docs.docker.com/compose/install/)
 - [Poetry](https://python-poetry.org/docs/#installation)
 
