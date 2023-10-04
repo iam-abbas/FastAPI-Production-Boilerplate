@@ -22,6 +22,10 @@ class UserRepository(BaseRepository[User]):
         """
         query = await self._query(join_)
         query = query.filter(User.username == username)
+
+        if join_ is not None:
+            return await self.all_unique(query)
+
         return await self._one_or_none(query)
 
     async def get_by_email(
@@ -36,9 +40,13 @@ class UserRepository(BaseRepository[User]):
         """
         query = await self._query(join_)
         query = query.filter(User.email == email)
+
+        if join_ is not None:
+            return await self.all_unique(query)
+   
         return await self._one_or_none(query)
 
-    async def _join_tasks(self, query: Select) -> Select:
+    def _join_tasks(self, query: Select) -> Select:
         """
         Join tasks.
 

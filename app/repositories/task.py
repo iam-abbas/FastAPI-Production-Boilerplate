@@ -23,9 +23,12 @@ class TaskRepository(BaseRepository[Task]):
         query = await self._query(join_)
         query = await self._get_by(query, "task_author_id", author_id)
 
+        if join_ is not None:
+            return await self.all_unique(query)
+
         return await self._all(query)
 
-    async def _join_author(self, query: Select) -> Select:
+    def _join_author(self, query: Select) -> Select:
         """
         Join the author relationship.
 

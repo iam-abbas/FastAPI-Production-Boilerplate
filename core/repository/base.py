@@ -41,9 +41,12 @@ class BaseRepository(Generic[ModelType]):
         :param join_: The joins to make.
         :return: A list of model instances.
         """
-        query = await self._query(join_)
+        query = self._query(join_)
         query = query.offset(skip).limit(limit)
 
+        if join_ is not None:
+            return await self.all_unique(query)
+            
         return await self._all(query)
 
     async def get_by(
@@ -61,9 +64,11 @@ class BaseRepository(Generic[ModelType]):
         :param join_: The joins to make.
         :return: The model instance.
         """
-        query = await self._query(join_)
+        query = self._query(join_)
         query = await self._get_by(query, field, value)
 
+        if join_ is not None:
+            return await self.all_unique(query)
         if unique:
             return await self._one(query)
 
@@ -78,7 +83,7 @@ class BaseRepository(Generic[ModelType]):
         """
         self.session.delete(model)
 
-    async def _query(
+    def _query(
         self,
         join_: set[str] | None = None,
         order_: dict | None = None,
@@ -91,8 +96,8 @@ class BaseRepository(Generic[ModelType]):
         :return: A callable that can be used to query the model.
         """
         query = select(self.model_class)
-        query = await self._maybe_join(query, join_)
-        query = await self._maybe_ordered(query, order_)
+        query = self._maybe_join(query, join_)
+        query = self._maybe_ordered(query, order_)
 
         return query
 
@@ -105,6 +110,10 @@ class BaseRepository(Generic[ModelType]):
         """
         query = await self.session.scalars(query)
         return query.all()
+
+    async def _all_unique(self, query: Select) -> list[ModelType]:
+        result = await self.session.execute(query)
+        return result.unique().scalars().all()
 
     async def _first(self, query: Select) -> ModelType | None:
         """
@@ -184,7 +193,7 @@ class BaseRepository(Generic[ModelType]):
         """
         return query.where(getattr(self.model_class, field) == value)
 
-    async def _maybe_join(self, query: Select, join_: set[str] | None = None) -> Select:
+    def _maybe_join(self, query: Select, join_: set[str] | None = None) -> Select:
         """
         Returns the query with the given joins.
 
@@ -200,7 +209,7 @@ class BaseRepository(Generic[ModelType]):
 
         return reduce(self._add_join_to_query, join_, query)
 
-    async def _maybe_ordered(self, query: Select, order_: dict | None = None) -> Select:
+    def _maybe_ordered(self, query: Select, order_: dict | None = None) -> Select:
         """
         Returns the query ordered by the given column.
 
@@ -218,7 +227,7 @@ class BaseRepository(Generic[ModelType]):
 
         return query
 
-    async def _add_join_to_query(self, query: Select, join_: set[str]) -> Select:
+    def _add_join_to_query(self, query: Select, join_: set[str]) -> Select:
         """
         Returns the query with the given join.
 
